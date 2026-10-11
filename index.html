@@ -197,11 +197,15 @@
   .menubtn.open i:nth-child(2) { opacity: 0; }
   .menubtn.open i:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
   .menubtn:not([data-n="0"])::after { content: attr(data-n); position: absolute; top: -7px; right: -7px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; line-height: 18px; border-radius: 9px; text-align: center; }
-  .minirow { display: flex; gap: 6px; }
-  .langbtn.mini { padding: 4px 10px; font-size: 12px; box-shadow: 0 2px 6px rgba(3,105,161,.3); }
+  .minirow { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+  .langbtn.mini { padding: 3px 9px; font-size: 11px; min-width: 52px; text-align: center; line-height: 1.3; box-shadow: 0 2px 6px rgba(3,105,161,.3); }
   #chips { display: none; position: absolute; top: calc(100% + 8px); right: 0; flex-direction: column; gap: 8px; background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 10px; min-width: 160px; box-shadow: 0 12px 30px rgba(3,105,161,.35); animation: fade .2s; }
   #chips.open { display: flex; }
   #chips .chip { background: var(--skypale); border: 1px solid var(--line); color: var(--text); }
+  .logo .ico { flex: none; width: 52px; height: 52px; min-width: 52px; min-height: 52px; font-size: 30px; line-height: 1; position: relative; }
+  .logo .ico::after { content: "ASR"; position: absolute; top: -7px; left: 50%; transform: translateX(-50%); background: #ef4444; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .6px; line-height: 1; padding: 2px 5px; border-radius: 6px; font-family: Arial, sans-serif; text-shadow: none; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  .logo h1 { display: inline-block; border-bottom: 3px solid #fff; padding-bottom: 3px; }
+  .panel h2 { display: inline-block; border-bottom: 1.5px solid var(--sky); padding-bottom: 5px; }
   /* toast */
   #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--skydark); color: #fff; padding: 12px 22px; border-radius: 30px; opacity: 0; transition: .35s; z-index: 9; box-shadow: 0 6px 20px rgba(3,105,161,.4); }
   #toast.on { transform: translateX(-50%); opacity: 1; }
@@ -232,7 +236,7 @@
         <rect class="phone" x="418" y="101" width="4" height="7" rx="1" fill="#22d3ee"/>
         <g class="b1"><rect x="406" y="56" width="36" height="22" rx="11" fill="#fff"/><path d="M418 78l6 8 6-8z" fill="#fff"/><text x="424" y="72" text-anchor="middle" font-size="13">📞</text></g>
         <g class="b2"><rect x="406" y="56" width="36" height="22" rx="11" fill="#fff"/><path d="M418 78l6 8 6-8z" fill="#fff"/><text x="424" y="72" text-anchor="middle" font-size="13">🚑</text></g>
-        <g class="ambu"><rect x="0" y="106" width="80" height="26" rx="4" fill="#fff"/><rect x="0" y="122" width="80" height="4" fill="#ef4444"/><rect x="21" y="112" width="14" height="4" fill="#ef4444"/><rect x="26" y="107" width="4" height="14" fill="#ef4444"/><rect x="60" y="110" width="16" height="9" rx="2" fill="#7dd3fc"/><rect x="30" y="102" width="20" height="4" fill="#475569"/><circle class="lr" cx="34" cy="100" r="3" fill="#ef4444"/><circle class="lb" cx="46" cy="100" r="3" fill="#3b82f6"/><circle cx="16" cy="133" r="6" fill="#0f172a"/><circle cx="62" cy="133" r="6" fill="#0f172a"/><circle cx="16" cy="133" r="2" fill="#94a3b8"/><circle cx="62" cy="133" r="2" fill="#94a3b8"/></g>
+        <g class="ambu"><rect x="0" y="106" width="80" height="26" rx="4" fill="#fff"/><rect x="0" y="122" width="80" height="4" fill="#ef4444"/><rect x="21" y="112" width="14" height="4" fill="#ef4444"/><rect x="26" y="107" width="4" height="14" fill="#ef4444"/><rect x="60" y="110" width="16" height="9" rx="2" fill="#7dd3fc"/><rect x="30" y="102" width="20" height="4" fill="#475569"/><circle class="lr" cx="34" cy="100" r="3" fill="#ef4444"/><circle class="lb" cx="46" cy="100" r="3" fill="#3b82f6"/><text x="47" y="119" text-anchor="middle" font-size="9" font-weight="800" fill="#0369a1" font-family="Arial, sans-serif">ASR</text><circle cx="16" cy="133" r="6" fill="#0f172a"/><circle cx="62" cy="133" r="6" fill="#0f172a"/><circle cx="16" cy="133" r="2" fill="#94a3b8"/><circle cx="62" cy="133" r="2" fill="#94a3b8"/></g>
         <g class="pm"><g class="bob"><use href="#ppl" xlink:href="#ppl" x="392" y="124" style="color:#059669"/></g></g>
         <g class="pm"><g class="bob"><use href="#ppl" xlink:href="#ppl" x="402" y="124" style="color:#059669"/></g></g>
       </g>
@@ -259,26 +263,26 @@
     </div>
     <div style="margin-top:14px"><label>Emergency description<textarea id="desc" rows="2" placeholder="e.g. Chest pain, difficulty breathing"></textarea></label></div>
     <div style="margin-top:14px"><label>Priority</label><div class="prio" id="prio"></div></div>
-    <button class="btn main" onclick="addRequest()">🚨 Submit Request</button>
-    <button class="btn ghost" onclick="simulate()">⚡ Simulate 3 Simultaneous Requests</button>
+    <button class="btn main" onclick="addRequest()">Submit Request</button>
+    <button class="btn ghost" onclick="simulate()">Simulate 3 Simultaneous Requests</button>
   </div>
 
   <!-- DISPATCH -->
   <div class="panel" id="p-dispatch">
-    <h2>📋 Pending Requests &amp; Dispatch</h2>
+    <h2>Pending Requests &amp; Dispatch</h2>
     <div id="pending"></div>
-    <button class="btn ok" onclick="autoAssign()">⚡ Auto-Assign Nearest to All</button>
+    <button class="btn ok" onclick="autoAssign()">Auto-Assign Nearest to All</button>
   </div>
 
   <!-- ACTIVE -->
   <div class="panel" id="p-active">
-    <h2>📡 Active Trips — Live Status</h2>
+    <h2>Active Trips — Live Status</h2>
     <div id="active"></div>
   </div>
 
   <!-- FLEET -->
   <div class="panel" id="p-fleet">
-    <h2>🛠 Fleet &amp; Availability</h2>
+    <h2>Fleet &amp; Availability</h2>
     <div class="fleet" id="fleet"></div>
     <h2 style="margin-top:6px">🗺 Live Map</h2>
     <svg class="map" id="map" viewBox="0 0 480 400"></svg>
@@ -286,7 +290,7 @@
 
   <!-- HISTORY -->
   <div class="panel" id="p-history">
-    <h2>🕘 Incident History</h2>
+    <h2>Incident History</h2>
     <div class="wrap" id="history"></div>
     <button class="btn no" onclick="resetAll()">Reset All Data</button>
   </div>
@@ -334,7 +338,7 @@ var ZONES = { "Central Market":[2,3], "Railway Station":[4,7], "Airport Road":[9
 var HOSPITAL = "City Hospital";
 var PRIO_ORDER = { Critical:0, High:1, Medium:2, Low:3 };
 var STEPS = ["Dispatched","En Route","On Scene","Transporting","At Hospital"];
-var TABS = [ ["request","🚨 New Request"], ["dispatch","📋 Dispatch"], ["active","📡 Active Trips"], ["fleet","🛠 Fleet & Map"], ["history","🕘 History"] ];
+var TABS = [ ["request","New Request"], ["dispatch","Dispatch"], ["active","Active Trips"], ["fleet","Fleet & Map"], ["history","History"] ];
 var state = { requests: [], ambulances: [], nextId: 1 };
 var tab = "request", prio = "Medium";
 
