@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambulance Dispatch Center</title>
+<style>
+  :root {
+    --sky: #0ea5e9; --sky2: #38bdf8; --skydark: #0369a1; --skylight: #e0f2fe; --skypale: #f0f9ff;
+    --white: #ffffff; --text: #0c4a6e; --muted: #5b7c99; --line: #cfe6f5;
+    /* status colours (kept only so priorities and trip stages stay easy to tell apart) */
+    --red: #ef4444; --orange: #f97316; --green: #22c55e; --yellow: #eab308; --purple: #8b5cf6; --teal: #14b8a6; --grey: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; font-family: "Segoe UI", Arial, sans-serif; color: var(--text);
+    background: linear-gradient(160deg, #bae6fd 0%, #e0f2fe 45%, #ffffff 100%);
+    display: flex; justify-content: center; padding: 24px 12px;
+  }
+  .app { width: 100%; max-width: 1100px; background: var(--white); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 20px 50px rgba(14,165,233,.25); overflow: hidden; }
+  /* header */
+  .top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 20px 26px; background: linear-gradient(90deg, var(--sky), var(--sky2)); color: #fff; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo .ico { font-size: 34px; background: #fff; border-radius: 50%; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; animation: glow 1.6s infinite; }
+  @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,.7); } 50% { box-shadow: 0 0 0 10px rgba(255,255,255,0); } }
+  .logo h1 { margin: 0; font-size: 22px; letter-spacing: .5px; }
+  .logo small { color: #e0f2fe; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { background: rgba(255,255,255,.25); border: 1px solid rgba(255,255,255,.5); padding: 6px 12px; border-radius: 20px; font-size: 13px; }
+  .chip b { font-size: 15px; }
+  /* tabs */
+  .tabs { display: flex; gap: 8px; padding: 14px 20px; overflow-x: auto; border-bottom: 1px solid var(--line); background: var(--skypale); }
+  .tab { flex: 1; min-width: 130px; border: 1px solid var(--line); background: #fff; color: var(--skydark); padding: 12px 10px; border-radius: 14px; cursor: pointer; font-size: 14px; font-weight: 600; transition: .2s; }
+  .tab:hover { background: var(--skylight); transform: translateY(-2px); }
+  .tab.active { background: linear-gradient(135deg, var(--sky), var(--sky2)); color: #fff; border-color: transparent; box-shadow: 0 6px 18px rgba(14,165,233,.4); }
+  .tab .n { background: #fff; color: var(--skydark); border-radius: 10px; padding: 1px 7px; font-size: 12px; margin-left: 6px; }
+  /* panels */
+  .panel { display: none; padding: 22px 26px 28px; animation: fade .3s; }
+  .panel.show { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h2 { margin: 0 0 16px; font-size: 18px; color: var(--skydark); }
+  /* form */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  label { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); display: block; }
+  input, select, textarea { width: 100%; margin-top: 6px; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: var(--text); font-size: 14px; outline: none; font-family: inherit; }
+  input:focus, select:focus, textarea:focus { border-color: var(--sky); box-shadow: 0 0 0 3px rgba(14,165,233,.25); }
+  .prio { display: flex; gap: 8px; margin-top: 6px; }
+  .prio div { flex: 1; text-align: center; padding: 10px 4px; border-radius: 10px; border: 2px solid var(--line); background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; transition: .2s; text-transform: none; letter-spacing: 0; color: var(--skydark); }
+  .prio div:hover { background: var(--skylight); }
+  .prio div.sel { color: #fff; }
+  .prio div.sel.Critical { background: var(--red); border-color: var(--red); }
+  .prio div.sel.High { background: var(--orange); border-color: var(--orange); }
+  .prio div.sel.Medium { background: var(--yellow); border-color: var(--yellow); color: #222; }
+  .prio div.sel.Low { background: var(--green); border-color: var(--green); }
+  /* buttons */
+  button.btn { border: none; cursor: pointer; padding: 11px 18px; border-radius: 10px; color: #fff; font-weight: 600; font-size: 14px; margin: 6px 6px 0 0; transition: .2s; background: var(--skydark); }
+  button.btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+  button.btn.main { background: linear-gradient(135deg, var(--sky), var(--sky2)); box-shadow: 0 4px 12px rgba(14,165,233,.4); }
+  button.btn.ok { background: var(--sky); }
+  button.btn.no { background: #ef4444; }
+  button.btn.ghost { background: var(--skylight); color: var(--skydark); }
+  button.sm { padding: 7px 12px; font-size: 12px; margin: 2px; }
+  /* cards */
+  .card { background: var(--skypale); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; border-left: 5px solid var(--sky); }
+  .card.Critical { border-left-color: var(--red); } .card.High { border-left-color: var(--orange); }
+  .card.Medium { border-left-color: var(--yellow); } .card.Low { border-left-color: var(--green); }
+  .card .info { flex: 1; min-width: 220px; } .card .info b { font-size: 16px; }
+  .card .info div { color: var(--muted); font-size: 13px; margin-top: 3px; }
+  .card .act { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .card .act select { width: auto; max-width: 260px; margin: 0; padding: 8px; font-size: 13px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; }
+  .Critical.badge { background: var(--red); } .High.badge { background: var(--orange); }
+  .Medium.badge { background: var(--yellow); color: #222; } .Low.badge { background: var(--green); }
+  .s-Available { background: var(--green); } .s-Dispatched { background: var(--sky); } .s-En-Route { background: var(--purple); }
+  .s-On-Scene { background: var(--orange); } .s-Transporting { background: var(--red); } .s-At-Hospital { background: var(--teal); }
+  .s-Out-of-Service { background: var(--grey); }
+  .steps { display: flex; gap: 4px; margin-top: 8px; width: 100%; }
+  .steps i { flex: 1; height: 6px; border-radius: 4px; background: var(--skylight); }
+  .steps i.done { background: linear-gradient(90deg, var(--sky), var(--sky2)); }
+  /* fleet */
+  .fleet { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .amb { background: var(--skypale); border: 1px solid var(--line); border-radius: 14px; padding: 14px; text-align: center; transition: .2s; }
+  .amb:hover { box-shadow: 0 6px 16px rgba(14,165,233,.25); transform: translateY(-3px); }
+  .amb .e { font-size: 30px; } .amb b { display: block; margin-top: 4px; } .amb small { color: var(--muted); display: block; margin: 3px 0 8px; }
+  .map { width: 100%; background: var(--skypale); border: 1px solid var(--line); border-radius: 14px; }
+  /* table */
+  .wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--skydark); background: var(--skylight); font-size: 12px; text-transform: uppercase; padding: 10px 8px; }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--line); }
+  .empty { text-align: center; color: var(--muted); padding: 40px 10px; font-size: 15px; }
+  /* footer */
+  .foot { text-align: center; padding: 18px 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; background: var(--skypale); }
+  .foot b { color: var(--text); }
+  .foot .members { margin-top: 6px; font-size: 12px; }
+  .foot .tag { font-size: 15px; font-weight: 700; color: var(--skydark); margin-bottom: 10px; }
+  .foot .hot { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .foot .hot span { background: var(--skylight); border: 1px solid var(--line); padding: 4px 12px; border-radius: 16px; font-size: 12px; color: var(--skydark); }
+  .foot .links { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 12px; }
+  .foot a { color: var(--sky); text-decoration: none; font-weight: 600; }
+  .foot a:hover { text-decoration: underline; }
+  .teambtn { background: #fff; color: var(--skydark); border: 1px solid var(--sky); padding: 6px 16px; border-radius: 18px; cursor: pointer; font-size: 12px; font-weight: 600; transition: .2s; }
+  .teambtn:hover { background: var(--sky); color: #fff; }
+  .team { max-height: 0; overflow: hidden; opacity: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; transition: max-height .4s, opacity .4s, margin .4s; }
+  .team.open { max-height: 140px; opacity: 1; margin-top: 10px; }
+  .team span { background: linear-gradient(135deg, var(--sky), var(--sky2)); padding: 6px 16px; border-radius: 20px; font-size: 13px; color: #fff; font-weight: 600; display: inline-flex; align-items: baseline; }
+  .team span em { font-style: normal; font-size: 30px; font-weight: 900; line-height: 1; margin-right: 1px; color: #fff; text-shadow: 0 2px 6px rgba(3,105,161,.5); }
+  .foot .copy { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+  #up { position: fixed; right: 20px; bottom: 20px; width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; font-size: 20px; color: #fff; background: linear-gradient(135deg, var(--sky), var(--sky2)); box-shadow: 0 6px 18px rgba(14,165,233,.5); opacity: 0; pointer-events: none; transition: .3s; z-index: 8; }
+  #up.on { opacity: 1; pointer-events: auto; }
+  #up:hover { transform: translateY(-3px); }
+  /* AI first-aid assistant */
+  #aiBtn { position: fixed; right: 20px; bottom: 76px; width: 56px; height: 56px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; font-size: 28px; font-weight: 900; color: #fff; line-height: 1; background: linear-gradient(135deg, var(--sky), var(--skydark)); box-shadow: 0 8px 22px rgba(14,165,233,.6); z-index: 10; transition: .2s; animation: aiPulse 2.2s infinite; }
+  #aiBtn:hover { transform: scale(1.1); }
+  @keyframes aiPulse { 0%,100% { box-shadow: 0 8px 22px rgba(14,165,233,.6), 0 0 0 0 rgba(14,165,233,.5); } 50% { box-shadow: 0 8px 22px rgba(14,165,233,.6), 0 0 0 14px rgba(14,165,233,0); } }
+  #aiBtn .tip { position: absolute; right: 66px; top: 12px; background: #fff; color: var(--skydark); font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 12px; white-space: nowrap; box-shadow: 0 4px 12px rgba(14,165,233,.3); border: 1px solid var(--line); }
+  #aiBox { position: fixed; right: 20px; bottom: 144px; width: min(370px, 92vw); height: min(500px, 70vh); background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 16px 50px rgba(3,105,161,.35); display: none; flex-direction: column; overflow: hidden; z-index: 10; }
+  #aiBox.open { display: flex; animation: fade .25s; }
+  .aiHead { background: linear-gradient(90deg, var(--sky), var(--sky2)); color: #fff; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .aiHead b { font-size: 15px; } .aiHead small { display: block; font-size: 11px; color: #e0f2fe; }
+  .aiHead button { background: rgba(255,255,255,.25); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px; }
+  #aiMsgs { flex: 1; overflow-y: auto; padding: 12px; background: var(--skypale); }
+  .m { max-width: 88%; padding: 9px 12px; border-radius: 14px; margin-bottom: 9px; font-size: 13px; line-height: 1.45; }
+  .m.bot { background: #fff; border: 1px solid var(--line); border-bottom-left-radius: 4px; color: var(--text); }
+  .m.me { background: var(--sky); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+  .m ol { margin: 6px 0 4px; padding-left: 18px; } .m li { margin-bottom: 3px; }
+  .m .rem { display: block; margin-top: 6px; color: #dc2626; font-weight: 700; font-size: 12px; }
+  #aiChips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 10px; border-top: 1px solid var(--line); background: #fff; }
+  #aiChips span { flex: none; background: var(--skylight); color: var(--skydark); border: 1px solid var(--line); padding: 5px 10px; border-radius: 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  #aiChips span:hover { background: var(--sky); color: #fff; }
+  .aiIn { display: flex; gap: 6px; padding: 8px 10px 10px; background: #fff; }
+  .aiIn input { margin: 0; padding: 9px 12px; border-radius: 20px; font-size: 13px; }
+  .aiIn button { flex: none; width: 40px; border: none; border-radius: 50%; background: var(--sky); color: #fff; cursor: pointer; font-size: 16px; }
+  .langbtn { background: #fff; color: var(--skydark); border: none; border-radius: 20px; padding: 8px 18px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 3px 10px rgba(3,105,161,.3); transition: .2s; }
+  .langbtn:hover { transform: translateY(-2px); }
+  /* dark mode */
+  .map { color: var(--skydark); }
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --white: #0f1b2d; --skypale: #13233a; --skylight: #1b3354; --line: #28435f;
+    --text: #e6f1fb; --muted: #8fa9c4; --skydark: #7dd3fc;
+  }
+  [data-theme="dark"] body { background: linear-gradient(160deg, #060b14 0%, #0b1220 50%, #0a1626 100%); }
+  [data-theme="dark"] .app { box-shadow: 0 20px 50px rgba(0,0,0,.6); }
+  [data-theme="dark"] .tab:not(.active), [data-theme="dark"] .prio div, [data-theme="dark"] input, [data-theme="dark"] select,
+  [data-theme="dark"] textarea, [data-theme="dark"] .teambtn, [data-theme="dark"] #aiBox, [data-theme="dark"] .m.bot,
+  [data-theme="dark"] #aiChips, [data-theme="dark"] .aiIn, [data-theme="dark"] #aiBtn .tip { background: var(--white); }
+  [data-theme="dark"] .tab:not(.active):hover { background: var(--skylight); }
+  [data-theme="dark"] .teambtn:hover { background: var(--sky); color: #fff; }
+  [data-theme="dark"] select option { background: #13233a; color: var(--text); }
+  [data-theme="dark"] button.btn { background: #0284c7; }
+  [data-theme="dark"] button.btn.main { background: linear-gradient(135deg, var(--sky), var(--sky2)); }
+  [data-theme="dark"] button.btn.ok { background: var(--sky); }
+  [data-theme="dark"] button.btn.no { background: #ef4444; }
+  [data-theme="dark"] button.btn.ghost { background: var(--skylight); color: var(--skydark); }
+  [data-theme="dark"] .tab .n { background: #fff; color: #0369a1; }
+  [data-theme="dark"] #toast { background: #0369a1; }
+  [data-theme="dark"] #aiBtn { background: linear-gradient(135deg, var(--sky), #0369a1); border-color: #0f1b2d; }
+  /* toast */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--skydark); color: #fff; padding: 12px 22px; border-radius: 30px; opacity: 0; transition: .35s; z-index: 9; box-shadow: 0 6px 20px rgba(3,105,161,.4); }
+  #toast.on { transform: translateX(-50%); opacity: 1; }
+  .pulse { animation: pulse 1.4s infinite; transform-origin: center; transform-box: fill-box; }
+  @keyframes pulse { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(2.6); opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="top">
+    <div class="logo"><span class="ico">🚑</span><div><h1>Ambulance Dispatch Center</h1><small>Emergency response control panel</small></div></div>
+    <div class="chips" id="chips"></div>
+    <button class="langbtn" id="langbtn" onclick="toggleLang()" title="Language / भाषा">हिन्दी</button>
+    <button class="langbtn" id="themebtn" onclick="toggleTheme()" title="Dark / Light mode">🌙</button>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <!-- NEW REQUEST -->
+  <div class="panel" id="p-request">
+    <h2>🚨 New Emergency Request</h2>
+    <div class="grid">
+      <label>Caller / Patient name<input id="name" placeholder="e.g. Ravi Kumar"></label>
+      <label>Location<select id="zone"></select></label>
+    </div>
+    <div style="margin-top:14px"><label>Emergency description<textarea id="desc" rows="2" placeholder="e.g. Chest pain, difficulty breathing"></textarea></label></div>
+    <div style="margin-top:14px"><label>Priority</label><div class="prio" id="prio"></div></div>
+    <button class="btn main" onclick="addRequest()">🚨 Submit Request</button>
+    <button class="btn ghost" onclick="simulate()">⚡ Simulate 3 Simultaneous Requests</button>
+  </div>
+
+  <!-- DISPATCH -->
+  <div class="panel" id="p-dispatch">
+    <h2>📋 Pending Requests &amp; Dispatch</h2>
+    <div id="pending"></div>
+    <button class="btn ok" onclick="autoAssign()">⚡ Auto-Assign Nearest to All</button>
+  </div>
+
+  <!-- ACTIVE -->
+  <div class="panel" id="p-active">
+    <h2>📡 Active Trips — Live Status</h2>
+    <div id="active"></div>
+  </div>
+
+  <!-- FLEET -->
+  <div class="panel" id="p-fleet">
+    <h2>🛠 Fleet &amp; Availability</h2>
+    <div class="fleet" id="fleet"></div>
+    <h2 style="margin-top:6px">🗺 Live Map</h2>
+    <svg class="map" id="map" viewBox="0 0 480 400"></svg>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="panel" id="p-history">
+    <h2>🕘 Incident History</h2>
+    <div class="wrap" id="history"></div>
+    <button class="btn no" onclick="resetAll()">Reset All Data</button>
+  </div>
+
+  <footer class="foot">
+    <div class="tag">🚑 Every second counts.</div>
+    <div class="hot">
+      <span>🚨 Emergency: <b>112</b></span>
+      <span>🚑 Ambulance: <b>108</b> / <b>102</b></span>
+      <span>👮 Police: <b>100</b></span>
+      <span>🔥 Fire: <b>101</b></span>
+    </div>
+    <div class="links">
+      <a href="#" onclick="go('request');toTop();return false">New Request</a>
+      <a href="#" onclick="go('dispatch');toTop();return false">Dispatch</a>
+      <a href="#" onclick="go('active');toTop();return false">Active Trips</a>
+      <a href="#" onclick="go('fleet');toTop();return false">Fleet &amp; Map</a>
+      <a href="#" onclick="go('history');toTop();return false">History</a>
+    </div>
+    <button class="teambtn" id="teambtn" onclick="toggleTeam()">👥 Meet the Team</button>
+    <div class="team" id="team">
+      <span><em>A</em>bhishek Kumar Sharma</span>
+      <span><em>S</em>udhakar Kumar Mehta</span>
+      <span><em>R</em>oshan</span>
+    </div>
+    <div class="members">🎓 Lovely Professional University &nbsp;•&nbsp; CSE326 Internet Programming</div>
+    <div class="members">✉️ <a href="mailto:teamasr404@gmail.com">teamasr404@gmail.com</a> &nbsp;•&nbsp; Version 4.0.4</div>
+    <div class="copy">&copy; <span id="yr"></span> <b>Team ASR</b>. All Rights Reserved.</div>
+  </footer>
+</div>
+<button id="aiBtn" title="First-Aid AI Assistant" onclick="toggleAI()">✚<span class="tip" id="aiTip">Need help? Ask me</span></button>
+<div id="aiBox">
+  <div class="aiHead"><div><b>✚ First-Aid Assistant</b><small>Basic guidance while help is on the way</small></div><button onclick="toggleAI()">✖</button></div>
+  <div id="aiMsgs"></div>
+  <div id="aiChips"></div>
+  <div class="aiIn"><input id="aiInput" placeholder="Describe the emergency..." onkeydown="if(event.key==='Enter')sendAI()"><button onclick="sendAI()">➤</button></div>
+</div>
+<button id="up" title="Back to top" onclick="toTop()">⬆</button>
+<div id="toast"></div>
+
+<script>
+// ---------- DATA ----------
+var ZONES = { "Central Market":[2,3], "Railway Station":[4,7], "Airport Road":[9,2], "University Campus":[7,8],
+  "Industrial Area":[10,6], "Riverside":[1,8], "Old Town":[3,1], "City Hospital":[5,5] };
+var HOSPITAL = "City Hospital";
+var PRIO_ORDER = { Critical:0, High:1, Medium:2, Low:3 };
+var STEPS = ["Dispatched","En Route","On Scene","Transporting","At Hospital"];
+var TABS = [ ["request","🚨 New Request"], ["dispatch","📋 Dispatch"], ["active","📡 Active Trips"], ["fleet","🛠 Fleet & Map"], ["history","🕘 History"] ];
+var state = { requests: [], ambulances: [], nextId: 1 };
+var tab = "request", prio = "Medium";
+
+function defaultFleet() { return [
+  {id:"AMB-01",driver:"Anil Sharma",zone:"Central Market",status:"Available"},
+  {id:"AMB-02",driver:"Pooja Singh",zone:"Railway Station",status:"Available"},
+  {id:"AMB-03",driver:"Rahul Verma",zone:"Airport Road",status:"Available"},
+  {id:"AMB-04",driver:"Sunita Devi",zone:"University Campus",status:"Available"},
+  {id:"AMB-05",driver:"Imran Khan",zone:"Industrial Area",status:"Out of Service"},
+  {id:"AMB-06",driver:"Kiran Patel",zone:"City Hospital",status:"Available"} ]; }
+
+function save() { try { localStorage.setItem("dispatchPro", JSON.stringify(state)); } catch (e) {} }
+function load() {
+  try { var s = localStorage.getItem("dispatchPro"); if (s) { state = JSON.parse(s); return; } } catch (e) {}
+  state.ambulances = defaultFleet();
+}
+
+// ---------- HELPERS ----------
+function $(id) { return document.getElementById(id); }
+function esc(t) { var d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+function cls(s) { return s.replace(/ /g, "-"); }
+function time(ts) { return new Date(ts).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
+function dist(a, b) { var p = ZONES[a], q = ZONES[b]; return Math.hypot(p[0]-q[0], p[1]-q[1]); }
+function eta(d) { return Math.max(2, Math.round(d * 2.5)) + " min"; }
+function req(id) { return state.requests.filter(function (r) { return r.id === id; })[0]; }
+function amb(id) { return state.ambulances.filter(function (a) { return a.id === id; })[0]; }
+function freeAmbs() { return state.ambulances.filter(function (a) { return a.status === "Available"; }); }
+function nearest(zone) { return freeAmbs().sort(function (a, b) { return dist(a.zone, zone) - dist(b.zone, zone); })[0]; }
+function pending() {
+  return state.requests.filter(function (r) { return r.status === "Pending"; })
+    .sort(function (a, b) { return PRIO_ORDER[a.priority] - PRIO_ORDER[b.priority] || a.time - b.time; });
+}
+function toast(msg) { var t = $("toast"); t.textContent = msg; t.className = "on"; setTimeout(function () { t.className = ""; }, 2600); }
+function go(t) { tab = t; render(); }
+
+// ---------- ACTIONS ----------
+function makeRequest(name, desc, zone, priority) {
+  state.requests.push({
+    id: state.nextId++, name: name, desc: desc, zone: zone, priority: priority,
+    time: Date.now(), status: "Pending", ambId: null, trip: null, end: null, outcome: ""
+  });
+}
+function addRequest() {
+  var n = $("name").value.trim(), d = $("desc").value.trim();
+  if (!n || !d) { toast("⚠️ Enter patient name and description"); return; }
+  makeRequest(n, d, $("zone").value, prio);
+  $("name").value = ""; $("desc").value = "";
+  toast("✅ Request submitted"); go("dispatch");
+}
+function simulate() {
+  var names = ["Meena Rao","Ajay Gupta","Farah Ali","Deepak Jha","Sita Kumari","Vikram Das"];
+  var descs = ["Road accident - injuries","Severe chest pain","Fall from height","Breathing difficulty","Burn injury","Unconscious, high fever"];
+  var zones = Object.keys(ZONES).filter(function (z) { return z !== HOSPITAL; });
+  var pr = ["Critical","High","Medium","Low"];
+  for (var i = 0; i < 3; i++) {
+    var r = Math.floor(Math.random() * names.length);
+    makeRequest(names[r], descs[r], zones[Math.floor(Math.random()*zones.length)], pr[Math.floor(Math.random()*4)]);
+  }
+  toast("🚨 3 new requests arrived!"); go("dispatch");
+}
+function doAssign(rid, aid) {
+  var r = req(rid), a = amb(aid);
+  if (!r || !a || a.status !== "Available") return false;
+  r.status = "Active"; r.ambId = aid; r.trip = "Dispatched"; a.status = "Dispatched";
+  return true;
+}
+function dispatch(rid) {
+  var s = $("sel-" + rid);
+  if (!s || !s.value) { toast("❌ No ambulance available"); return; }
+  doAssign(rid, s.value); toast("🚑 Ambulance dispatched"); render();
+}
+function autoAssign() {
+  var c = 0;
+  pending().forEach(function (r) { var a = nearest(r.zone); if (a && doAssign(r.id, a.id)) c++; });
+  toast(c ? "⚡ " + c + " ambulance(s) auto-assigned" : "❌ Nothing to assign"); render();
+}
+function cancelReq(id) { var r = req(id); r.status = "Done"; r.outcome = "Cancelled"; r.end = Date.now(); render(); }
+function advance(id) {
+  var r = req(id), a = amb(r.ambId), i = STEPS.indexOf(r.trip);
+  if (i < STEPS.length - 1) {
+    r.trip = STEPS[i + 1]; a.status = r.trip;
+    if (r.trip === "On Scene") a.zone = r.zone;
+    if (r.trip === "At Hospital") a.zone = HOSPITAL;
+  } else {
+    r.status = "Done"; r.outcome = "Patient delivered"; r.end = Date.now();
+    a.status = "Available"; a.zone = HOSPITAL; toast("✅ Trip completed");
+  }
+  render();
+}
+function toggleService(id) { var a = amb(id); a.status = a.status === "Available" ? "Out of Service" : "Available"; render(); }
+function resetAll() {
+  if (!confirm(tr("Delete all data and reset the fleet?"))) return;
+  state = { requests: [], ambulances: defaultFleet(), nextId: 1 }; render();
+}
+function setPrio(p) { prio = p; renderPrio(); }
+
+// ---------- RENDER ----------
+function renderPrio() {
+  $("prio").innerHTML = ["Critical","High","Medium","Low"].map(function (p) {
+    return '<div class="' + p + (p === prio ? " sel" : "") + '" onclick="setPrio(\'' + p + '\')">' + p + "</div>";
+  }).join("");
+}
+
+function renderMap() {
+  var S = 40, svg = '';
+  for (var i = 0; i <= 12; i++) svg += '<line x1="' + i*S + '" y1="0" x2="' + i*S + '" y2="400" stroke="currentColor" stroke-opacity=".18"/>';
+  for (var j = 0; j <= 10; j++) svg += '<line x1="0" y1="' + j*S + '" x2="480" y2="' + j*S + '" stroke="currentColor" stroke-opacity=".18"/>';
+  var pend = {}; state.requests.forEach(function (r) { if (r.status !== "Done") pend[r.zone] = true; });
+  Object.keys(ZONES).forEach(function (z) {
+    var x = ZONES[z][0]*S + 20, y = ZONES[z][1]*S + 5, h = z === HOSPITAL;
+    if (pend[z]) svg += '<circle class="pulse" cx="' + x + '" cy="' + y + '" r="8" fill="#ef4444"/>';
+    svg += '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + (h ? '#14b8a6' : '#0ea5e9') + '"/>';
+    svg += '<text x="' + x + '" y="' + (y + 20) + '" fill="currentColor" font-size="10" text-anchor="middle">' + (h ? "🏥 " : "") + z + '</text>';
+  });
+  var seen = {};
+  state.ambulances.forEach(function (a) {
+    seen[a.zone] = (seen[a.zone] || 0) + 1;
+    var x = ZONES[a.zone][0]*S + 20 + (seen[a.zone]-1)*16 - 6, y = ZONES[a.zone][1]*S - 8;
+    svg += '<text x="' + x + '" y="' + y + '" font-size="16" opacity="' + (a.status === "Out of Service" ? .35 : 1) + '">🚑</text>';
+  });
+  $("map").innerHTML = svg;
+}
+
+function render() {
+  // chips + tabs
+  var p = pending(), act = state.requests.filter(function (r) { return r.status === "Active"; });
+  $("chips").innerHTML = '<span class="chip">⏳ Pending <b>' + p.length + '</b></span><span class="chip">📡 Active <b>' + act.length +
+    '</b></span><span class="chip">🟢 Free <b>' + freeAmbs().length + "/" + state.ambulances.length + "</b></span>";
+  var counts = { dispatch: p.length, active: act.length };
+  $("tabs").innerHTML = TABS.map(function (t) {
+    var n = counts[t[0]] ? '<span class="n">' + counts[t[0]] + "</span>" : "";
+    return '<button class="tab' + (t[0] === tab ? " active" : "") + '" onclick="go(\'' + t[0] + '\')">' + t[1] + n + "</button>";
+  }).join("");
+  TABS.forEach(function (t) { $("p-" + t[0]).className = "panel" + (t[0] === tab ? " show" : ""); });
+
+  // pending cards
+  $("pending").innerHTML = p.length ? p.map(function (r) {
+    var list = freeAmbs().sort(function (a, b) { return dist(a.zone, r.zone) - dist(b.zone, r.zone); });
+    var opts = list.length ? list.map(function (a, i) {
+      var d = dist(a.zone, r.zone);
+      return '<option value="' + a.id + '">' + a.id + " • " + d.toFixed(1) + " km • ETA " + eta(d) + (i === 0 ? " ★" : "") + "</option>";
+    }).join("") : '<option value="">No ambulance free</option>';
+    return '<div class="card ' + r.priority + '"><div class="info"><b>' + esc(r.name) + ' <span class="badge ' + r.priority + '">' + r.priority +
+      "</span></b><div>" + esc(r.desc) + "</div><div>📍 " + r.zone + " &nbsp;•&nbsp; 🕒 " + time(r.time) + " &nbsp;•&nbsp; #" + r.id + "</div></div>" +
+      '<div class="act"><select id="sel-' + r.id + '">' + opts + '</select><button class="btn sm ok" onclick="dispatch(' + r.id +
+      ')">🚑 Dispatch</button><button class="btn sm no" onclick="cancelReq(' + r.id + ')">✖</button></div></div>';
+  }).join("") : '<div class="empty">✅ No pending requests. All clear!</div>';
+
+  // active cards
+  $("active").innerHTML = act.length ? act.map(function (r) {
+    var i = STEPS.indexOf(r.trip);
+    var bar = STEPS.map(function (s, k) { return '<i class="' + (k <= i ? "done" : "") + '"></i>'; }).join("");
+    var label = i === STEPS.length - 1 ? "✔ Complete Trip" : "Next ➜ " + STEPS[i + 1];
+    return '<div class="card ' + r.priority + '"><div class="info"><b>' + esc(r.name) + ' <span class="badge ' + r.priority + '">' + r.priority +
+      "</span></b><div>" + esc(r.desc) + "</div><div>📍 " + r.zone + " &nbsp;•&nbsp; 🚑 " + r.ambId + '</div></div><div class="act"><span class="badge s-' +
+      cls(r.trip) + '">' + r.trip + '</span><button class="btn sm ok" onclick="advance(' + r.id + ')">' + label + '</button></div><div class="steps">' + bar + "</div></div>";
+  }).join("") : '<div class="empty">No active trips right now.</div>';
+
+  // fleet
+  $("fleet").innerHTML = state.ambulances.map(function (a) {
+    var b = a.status === "Available" ? '<button class="btn sm ghost" onclick="toggleService(\'' + a.id + '\')">Set Out of Service</button>'
+      : a.status === "Out of Service" ? '<button class="btn sm ok" onclick="toggleService(\'' + a.id + '\')">Set Available</button>'
+      : '<small>On a trip</small>';
+    return '<div class="amb"><div class="e">🚑</div><b>' + a.id + "</b><small>" + esc(a.driver) + " • " + a.zone +
+      '</small><span class="badge s-' + cls(a.status) + '">' + a.status + "</span><div style='margin-top:8px'>" + b + "</div></div>";
+  }).join("");
+  renderMap();
+
+  // history
+  var h = state.requests.filter(function (r) { return r.status === "Done"; }).sort(function (a, b) { return b.end - a.end; });
+  $("history").innerHTML = h.length ? "<table><tr><th>#</th><th>Time</th><th>Patient</th><th>Description</th><th>Location</th><th>Priority</th><th>Ambulance</th><th>Outcome</th><th>Duration</th></tr>" +
+    h.map(function (r) {
+      return "<tr><td>" + r.id + "</td><td>" + time(r.time) + "</td><td>" + esc(r.name) + "</td><td>" + esc(r.desc) + "</td><td>" + r.zone +
+        '</td><td><span class="badge ' + r.priority + '">' + r.priority + "</span></td><td>" + (r.ambId || "-") + "</td><td>" + r.outcome +
+        "</td><td>" + Math.max(0, Math.round((r.end - r.time)/60000)) + " min</td></tr>";
+    }).join("") + "</table>" : '<div class="empty">No completed incidents yet.</div>';
+
+  save();
+}
+
+// ---------- TEAM TOGGLE ----------
+function toggleTeam() {
+  var open = $("team").classList.toggle("open");
+  $("teambtn").textContent = open ? "🙈 Hide Team" : "👥 Meet the Team";
+}
+
+// ---------- AI FIRST-AID ASSISTANT (built-in, works offline) ----------
+var AI_KB = [
+  { t:"CPR (person not breathing / no pulse)", k:["cpr","not breathing","no pulse","cardiac arrest","stopped breathing","unresponsive","heart stopped"],
+    a:["Check if the person responds and is breathing normally.","Push hard and fast in the centre of the chest, about 100-120 pushes per minute, 5-6 cm deep.","Let the chest rise fully between pushes. If untrained, do hands-only CPR.","If an AED is nearby, switch it on and follow its voice instructions.","Do not stop until the ambulance team takes over."] },
+  { t:"Chest pain / possible heart attack", k:["chest pain","heart attack","chest tight","chest pressure","left arm"],
+    a:["Make the person sit down, rest and stay calm.","Loosen tight clothing.","Do not give food or drink. The emergency operator may advise aspirin.","Stay with them and watch their breathing.","If they collapse and stop breathing, start CPR."] },
+  { t:"Choking", k:["chok","stuck in throat","something stuck"],
+    a:["Ask the person to cough hard if they can.","If they cannot cough, speak or breathe: give 5 firm back blows between the shoulder blades.","Then give 5 abdominal thrusts (stand behind, fist above the navel, pull inward and upward).","Repeat back blows and thrusts until the object comes out.","For a baby, use 5 back blows and 5 chest thrusts only. If the person becomes unconscious, start CPR."] },
+  { t:"Severe bleeding", k:["bleed","blood","wound","stab","gunshot","deep cut"],
+    a:["Press firmly on the wound with a clean cloth or bandage.","Do not remove the cloth if it soaks through; add more on top.","Raise the injured limb if possible and keep the person lying down.","Do not remove objects stuck in the wound.","Keep the person warm and calm."] },
+  { t:"Burns", k:["burn","scald","boiling","hot water"],
+    a:["Cool the burn under cool running water for 20 minutes.","Remove rings or tight items near the burn, unless stuck to the skin.","Cover loosely with clean cling film or a non-fluffy cloth.","Do not use ice, butter, toothpaste or burst blisters.","Serious or large burns need hospital care."] },
+  { t:"Broken bone / fracture", k:["fractur","broken bone","bone","sprain","dislocat","fell","fall"],
+    a:["Keep the person still and support the injured part in the position found.","Do not try to straighten the limb.","Apply a wrapped ice pack to reduce swelling.","If you suspect a neck or back injury, do not move the person at all.","Stay with them until help arrives."] },
+  { t:"Road accident", k:["accident","crash","collision","road"],
+    a:["Make sure the area is safe before approaching.","Do not move the injured unless there is danger such as fire.","Check breathing and control any heavy bleeding with firm pressure.","Keep the person still and warm. Do not remove a helmet unless breathing is blocked.","Tell the ambulance team what happened as soon as they arrive."] },
+  { t:"Stroke (use FAST)", k:["stroke","face droop","slurred","speech","paralys","numb"],
+    a:["Face: is one side drooping? Arms: can they raise both? Speech: is it slurred?","Time: note when symptoms started and tell the ambulance team.","Keep the person sitting or lying comfortably.","Do not give food, drink or medicine.","Stay with them and keep checking their breathing."] },
+  { t:"Seizure / fits", k:["seizure","fits","convuls","epilep"],
+    a:["Clear the area and cushion the head.","Do not hold the person down or put anything in their mouth.","Note how long the seizure lasts.","When the shaking stops, turn them onto their side (recovery position).","Call for urgent help if it lasts over 5 minutes or they do not wake up."] },
+  { t:"Unconscious or fainted person", k:["unconscious","faint","passed out","collapse","not responding"],
+    a:["Tap their shoulders and speak loudly. Check for normal breathing.","If breathing: place them on their side (recovery position) and keep the airway open.","If NOT breathing: start CPR.","If they are just fainting and wake up, lay them flat and raise the legs.","Do not give food or drink until fully alert."] },
+  { t:"Severe allergic reaction", k:["allerg","anaphyla","swelling","sting","hives"],
+    a:["If the person has an adrenaline (epinephrine) auto-injector, help them use it right away.","Remove the trigger if you can (for example a bee sting).","Lay them down with legs raised. If breathing is hard, let them sit up.","Stay with them and be ready to start CPR.","They still need hospital care even if they improve."] },
+  { t:"Breathing difficulty / asthma", k:["asthma","wheez","breathless","short of breath","breathing difficulty","difficulty breathing","cant breathe","can't breathe"],
+    a:["Help the person sit upright and stay calm.","Help them use their reliever inhaler as prescribed.","Loosen tight clothing and open a window for fresh air.","If they get worse, turn blue or cannot speak, tell the operator immediately.","If they stop breathing, start CPR."] },
+  { t:"Snake or scorpion bite", k:["snake","scorpion"],
+    a:["Keep the person calm and as still as possible.","Keep the bitten limb still and slightly below heart level; remove rings and watches.","Do NOT cut, suck, tie a tight tourniquet or apply ice.","Note the snake's appearance if it is safe to do so.","Get to hospital urgently for anti-venom."] },
+  { t:"Animal bite (dog / monkey)", k:["dog","monkey","animal","rabies","bite"],
+    a:["Wash the wound with soap and running water for at least 15 minutes.","Cover with a clean dressing.","Do not stitch or apply chilli, oil or herbs.","Go to hospital the same day for rabies vaccination."] },
+  { t:"Poisoning", k:["poison","swallowed","overdose","chemical","pesticide"],
+    a:["Do not make the person vomit.","Keep the container or label to show the medical team.","If poison is on skin or in the eyes, rinse with plenty of water.","Keep them awake and on their side if drowsy.","Tell the ambulance team what was taken and when."] },
+  { t:"Drowning", k:["drown","swim"],
+    a:["Pull the person out safely without putting yourself at risk.","If not breathing, start CPR. Rescue breaths matter for drowning if you can give them.","If breathing, place them on their side and keep them warm.","Everyone who nearly drowned needs hospital checks."] },
+  { t:"Heatstroke", k:["heatstroke","heat stroke","sunstroke","heat","dehydrat"],
+    a:["Move the person to shade or a cool place.","Cool the body with wet cloths, water or fanning.","If fully awake, give small sips of water.","Loosen or remove extra clothing.","Heatstroke is an emergency, so keep monitoring until help arrives."] },
+  { t:"Electric shock", k:["electric","shock","current","live wire"],
+    a:["Do NOT touch the person until the power is switched off.","Turn off the main switch, or push the source away with a dry wooden stick.","Check breathing and start CPR if needed.","Cover burns loosely with a clean cloth.","Every electric shock victim should be checked at hospital."] },
+  { t:"Head injury", k:["head injury","head","concussion","skull"],
+    a:["Keep the person still and calm.","Apply a cold pack wrapped in cloth to any swelling.","Watch for vomiting, drowsiness, confusion or fits.","Do not give food or drink.","If unconscious but breathing, use the recovery position."] },
+  { t:"Pregnancy / labour", k:["pregnan","labour","labor","delivery","baby coming","contraction"],
+    a:["Keep the mother calm and comfortable, lying on her left side.","Have clean towels and blankets ready.","Do not pull the baby or cut the cord.","After birth, dry the baby and keep it warm against the mother's skin.","Stay with them until the ambulance arrives."] },
+  { t:"Low blood sugar (diabetes)", k:["diabet","sugar","insulin","hypoglyc"],
+    a:["If the person is awake and can swallow, give sugar, glucose tablets or sweet juice.","Let them rest and recheck after 10-15 minutes.","If they are drowsy or unconscious, give nothing by mouth.","Put them on their side and wait for the ambulance."] }
+];
+var aiOpened = false;
+
+function aiAdd(who, html) {
+  var d = document.createElement("div");
+  d.className = "m " + who; d.innerHTML = (LANG === "hi" && AI_UI[html]) || html;
+  $("aiMsgs").appendChild(d);
+  $("aiMsgs").scrollTop = $("aiMsgs").scrollHeight;
+}
+function aiStatus() {
+  var act = state.requests.filter(function (r) { return r.status === "Active"; });
+  if (!act.length) return "There is no active ambulance trip right now. If you need an ambulance, submit a request under <b>New Request</b>, or call <b>112 / 108</b>.";
+  return act.map(function (r) {
+    var a = amb(r.ambId), msg;
+    if (r.trip === "Dispatched" || r.trip === "En Route")
+      msg = "is on the way to <b>" + r.zone + "</b>. Estimated arrival about <b>" + eta(dist(a.zone, r.zone)) + "</b>.";
+    else if (r.trip === "On Scene") msg = "has reached the patient at <b>" + r.zone + "</b>.";
+    else if (r.trip === "Transporting") msg = "is taking the patient to the hospital.";
+    else msg = "has arrived at the hospital.";
+    return "🚑 <b>" + r.ambId + "</b> (" + esc(r.name) + ") " + msg + " Status: <b>" + r.trip + "</b>.";
+  }).join("<br><br>");
+}
+function aiReply(text) {
+  var q = text.toLowerCase().trim();
+  if (/status|\beta\b|where is|how long|when will/.test(q)) return aiStatus();
+  var best = null, bestScore = 0;
+  AI_KB.forEach(function (e) {
+    var sc = 0;
+    e.k.concat(AI_HIK[e.t] || []).forEach(function (w) { if (q.indexOf(w) > -1) sc += w.length; });
+    if (sc > bestScore) { bestScore = sc; best = e; }
+  });
+  if (best) {
+    var hi = LANG === "hi" && AI_HI[best.t], ti = hi ? hi.t : best.t, st = hi ? hi.a : best.a;
+    return "<b>" + ti + "</b><ol>" + st.map(function (x) { return "<li>" + x + "</li>"; }).join("") +
+      '</ol><span class="rem">📞 Call 112 / 108 if you have not already. This is basic guidance, not a replacement for medical professionals.</span>';
+  }
+  if (q.length < 16 && /^(hi|hello|hey|help|namaste)/.test(q)) return "Hello! Tell me what is happening (for example <i>bleeding</i>, <i>burn</i> or <i>not breathing</i>), or tap a topic below.";
+  return "I did not understand that. Please tap a topic below or describe the problem in a few words, like <i>chest pain</i> or <i>heavy bleeding</i>. For life-threatening emergencies call <b>112 / 108</b> now.";
+}
+function sendAI(text) {
+  var inp = $("aiInput"), t = text || inp.value.trim();
+  if (!t) return;
+  aiAdd("me", esc(t)); inp.value = "";
+  setTimeout(function () { aiAdd("bot", aiReply(t)); }, 350);
+}
+function toggleAI() {
+  var box = $("aiBox"), open = box.classList.toggle("open");
+  $("aiTip").style.display = "none";
+  if (open && !aiOpened) {
+    aiOpened = true;
+    aiAdd("bot", "Hi! I'm the <b>First-Aid Assistant</b> ✚. While the ambulance is on the way, tell me what is happening and I will share simple steps you can follow.");
+    var act = state.requests.filter(function (r) { return r.status === "Active"; });
+    if (act.length) aiAdd("bot", aiStatus());
+    if (open) $("aiInput").focus();
+  }
+}
+(function () {
+  var chips = [["❤️ CPR","cpr"],["🩸 Bleeding","bleeding"],["🔥 Burns","burn"],["😮‍💨 Choking","choking"],["🧠 Stroke","stroke"],["⚡ Seizure","seizure"],["🦴 Fracture","fracture"],["🫁 Breathing","breathing difficulty"],["🚑 Ambulance status","ambulance status"]];
+  $("aiChips").innerHTML = chips.map(function (c) { return '<span onclick="sendAI(\'' + c[1] + '\')">' + c[0] + "</span>"; }).join("");
+})();
+
+// ---------- BACK TO TOP ----------
+function toTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
+window.addEventListener("scroll", function () { $("up").className = window.scrollY > 250 ? "on" : ""; });
+
+// ---------- DARK / LIGHT MODE ----------
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  $("themebtn").textContent = t === "dark" ? "☀️" : "🌙";
+  try { localStorage.setItem("asrTheme", t); } catch (e) {}
+}
+function toggleTheme() { setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"); }
+
+// ---------- HINDI / ENGLISH ----------
+var LANG = "en";
+var HI = {
+  "Emergency response control panel":"आपातकालीन प्रतिक्रिया नियंत्रण पैनल","⏳ Pending":"⏳ लंबित","📡 Active":"📡 सक्रिय","🟢 Free":"🟢 खाली",
+  "🚨 New Request":"🚨 नया अनुरोध","📋 Dispatch":"📋 डिस्पैच","📡 Active Trips":"📡 सक्रिय यात्राएं","🛠 Fleet & Map":"🛠 बेड़ा और नक्शा","🕘 History":"🕘 इतिहास",
+  "🚨 New Emergency Request":"🚨 नया आपातकालीन अनुरोध","Caller / Patient name":"कॉलर / मरीज़ का नाम","Location":"स्थान","Emergency description":"आपातकाल का विवरण","Priority":"प्राथमिकता",
+  "Critical":"गंभीर","High":"उच्च","Medium":"मध्यम","Low":"कम","🚨 Submit Request":"🚨 अनुरोध भेजें","⚡ Simulate 3 Simultaneous Requests":"⚡ एक साथ 3 अनुरोध दिखाएं",
+  "📋 Pending Requests & Dispatch":"📋 लंबित अनुरोध और डिस्पैच","⚡ Auto-Assign Nearest to All":"⚡ सभी को सबसे नज़दीकी एम्बुलेंस दें","🚑 Dispatch":"🚑 रवाना करें",
+  "✅ No pending requests. All clear!":"✅ कोई लंबित अनुरोध नहीं। सब ठीक है!","No ambulance free":"कोई एम्बुलेंस खाली नहीं",
+  "📡 Active Trips — Live Status":"📡 सक्रिय यात्राएं — लाइव स्थिति","No active trips right now.":"अभी कोई सक्रिय यात्रा नहीं है।","✔ Complete Trip":"✔ यात्रा पूर्ण करें",
+  "🛠 Fleet & Availability":"🛠 बेड़ा और उपलब्धता","🗺 Live Map":"🗺 लाइव नक्शा","Set Out of Service":"सेवा से बाहर करें","Set Available":"उपलब्ध करें","On a trip":"यात्रा पर है",
+  "🕘 Incident History":"🕘 घटना इतिहास","Time":"समय","Patient":"मरीज़","Description":"विवरण","Ambulance":"एम्बुलेंस","Outcome":"परिणाम","Duration":"अवधि",
+  "Patient delivered":"मरीज़ पहुंचाया गया","Cancelled":"रद्द","No completed incidents yet.":"अभी कोई पूर्ण घटना नहीं।","Reset All Data":"सारा डेटा रीसेट करें",
+  "Available":"उपलब्ध","Dispatched":"रवाना किया गया","En Route":"रास्ते में","On Scene":"घटनास्थल पर","Transporting":"अस्पताल ले जा रहे","At Hospital":"अस्पताल में","Out of Service":"सेवा से बाहर",
+  "🚑 Every second counts.":"🚑 हर सेकंड कीमती है।","🚨 Emergency:":"🚨 आपातकाल:","🚑 Ambulance:":"🚑 एम्बुलेंस:","👮 Police:":"👮 पुलिस:","🔥 Fire:":"🔥 फ़ायर:",
+  "New Request":"नया अनुरोध","Dispatch":"डिस्पैच","Active Trips":"सक्रिय यात्राएं","Fleet & Map":"बेड़ा और नक्शा","History":"इतिहास","👥 Meet the Team":"👥 टीम से मिलें","🙈 Hide Team":"🙈 टीम छिपाएं",
+  "Need help? Ask me":"मदद चाहिए? मुझसे पूछें","✚ First-Aid Assistant":"✚ प्राथमिक उपचार सहायक","Basic guidance while help is on the way":"मदद आने तक बुनियादी मार्गदर्शन",
+  "❤️ CPR":"❤️ सीपीआर","🩸 Bleeding":"🩸 खून बहना","🔥 Burns":"🔥 जलना","😮‍💨 Choking":"😮‍💨 दम घुटना","🧠 Stroke":"🧠 स्ट्रोक","⚡ Seizure":"⚡ दौरा","🦴 Fracture":"🦴 हड्डी टूटना","🫁 Breathing":"🫁 सांस की तकलीफ़","🚑 Ambulance status":"🚑 एम्बुलेंस स्थिति",
+  "📞 Call 112 / 108 if you have not already. This is basic guidance, not a replacement for medical professionals.":"📞 यदि अभी तक नहीं किया है तो 112 / 108 पर कॉल करें। यह केवल बुनियादी मार्गदर्शन है, डॉक्टरी सलाह का विकल्प नहीं।",
+  "⚠️ Enter patient name and description":"⚠️ मरीज़ का नाम और विवरण दर्ज करें","✅ Request submitted":"✅ अनुरोध दर्ज हो गया","🚨 3 new requests arrived!":"🚨 3 नए अनुरोध आए!",
+  "❌ No ambulance available":"❌ कोई एम्बुलेंस उपलब्ध नहीं","🚑 Ambulance dispatched":"🚑 एम्बुलेंस रवाना की गई","❌ Nothing to assign":"❌ आवंटित करने के लिए कुछ नहीं","✅ Trip completed":"✅ यात्रा पूर्ण हुई",
+  "Delete all data and reset the fleet?":"सारा डेटा हटाकर बेड़ा रीसेट करें?","e.g. Ravi Kumar":"जैसे: रवि कुमार","e.g. Chest pain, difficulty breathing":"जैसे: सीने में दर्द, सांस लेने में तकलीफ़",
+  "Describe the emergency...":"आपातकाल का वर्णन करें...","Back to top":"ऊपर जाएं","First-Aid AI Assistant":"प्राथमिक उपचार सहायक"
+};
+var PARTS = [
+  ["Ambulance Dispatch Center","एम्बुलेंस डिस्पैच केंद्र"],["Central Market","केंद्रीय बाज़ार"],["Railway Station","रेलवे स्टेशन"],["Airport Road","एयरपोर्ट रोड"],["University Campus","यूनिवर्सिटी कैंपस"],
+  ["Industrial Area","औद्योगिक क्षेत्र"],["Riverside","रिवरसाइड"],["Old Town","पुराना शहर"],["City Hospital","सिटी अस्पताल"],["Out of Service","सेवा से बाहर"],
+  ["Dispatched","रवाना किया गया"],["En Route","रास्ते में"],["On Scene","घटनास्थल पर"],["Transporting","अस्पताल ले जा रहे"],["At Hospital","अस्पताल में"],
+  ["Next ➜ ","अगला ➜ "],["Complete Trip","यात्रा पूर्ण करें"],[/\bETA\b/g,"पहुंचने में"],["nearest","सबसे नज़दीक"],[/\bkm\b/g,"किमी"],[/\bmin\b/g,"मिनट"],
+  ["ambulance(s) auto-assigned","एम्बुलेंस अपने-आप आवंटित"],["Lovely Professional University","लवली प्रोफेशनल यूनिवर्सिटी"],["Internet Programming","इंटरनेट प्रोग्रामिंग"],
+  ["Version","संस्करण"],["All Rights Reserved","सर्वाधिकार सुरक्षित"],["Estimated arrival about","अनुमानित पहुंच लगभग"],["is on the way to","के रास्ते में है:"],
+  ["has reached the patient at","मरीज़ के पास पहुंच गई:"],["is taking the patient to the hospital.","मरीज़ को अस्पताल ले जा रही है।"],["has arrived at the hospital.","अस्पताल पहुंच गई है।"],["Status:","स्थिति:"]
+];
+var AI_UI = {
+  "Hi! I'm the <b>First-Aid Assistant</b> ✚. While the ambulance is on the way, tell me what is happening and I will share simple steps you can follow.":"नमस्ते! मैं <b>प्राथमिक उपचार सहायक</b> ✚ हूं। एम्बुलेंस आने तक बताइए क्या हुआ है, मैं आसान कदम बताऊंगा।",
+  "Hello! Tell me what is happening (for example <i>bleeding</i>, <i>burn</i> or <i>not breathing</i>), or tap a topic below.":"नमस्ते! बताइए क्या हुआ है (जैसे <i>खून बहना</i>, <i>जलना</i> या <i>सांस न आना</i>), या नीचे कोई विषय चुनें।",
+  "I did not understand that. Please tap a topic below or describe the problem in a few words, like <i>chest pain</i> or <i>heavy bleeding</i>. For life-threatening emergencies call <b>112 / 108</b> now.":"मैं समझ नहीं पाया। कृपया नीचे कोई विषय चुनें या कुछ शब्दों में समस्या लिखें, जैसे <i>सीने में दर्द</i> या <i>ज़्यादा खून बहना</i>। जानलेवा स्थिति में अभी <b>112 / 108</b> पर कॉल करें।",
+  "There is no active ambulance trip right now. If you need an ambulance, submit a request under <b>New Request</b>, or call <b>112 / 108</b>.":"अभी कोई सक्रिय एम्बुलेंस यात्रा नहीं है। एम्बुलेंस चाहिए तो <b>नया अनुरोध</b> भेजें, या <b>112 / 108</b> पर कॉल करें।"
+};
+var AI_HIK = {
+  "CPR (person not breathing / no pulse)":["सीपीआर","सांस नहीं","सांस बंद"], "Chest pain / possible heart attack":["सीने में दर्द","छाती में दर्द","दिल का दौरा"],
+  "Choking":["दम घुट","गले में फंस","अटक"], "Severe bleeding":["खून","रक्त","घाव"], "Burns":["जला","जल गया","आग"]
+};
+var AI_HI = {
+  "CPR (person not breathing / no pulse)":{t:"सीपीआर (सांस नहीं ले रहा / नाड़ी नहीं)",a:["देखें कि व्यक्ति प्रतिक्रिया दे रहा है और सामान्य रूप से सांस ले रहा है या नहीं।","छाती के बीच में तेज़ी और ज़ोर से दबाएं: प्रति मिनट लगभग 100-120 बार, 5-6 सेमी गहराई तक।","हर दबाव के बाद छाती को पूरी तरह ऊपर आने दें। प्रशिक्षित न हों तो सिर्फ़ हाथों से सीपीआर करें।","पास में AED हो तो उसे चालू करें और उसके निर्देश मानें।","एम्बुलेंस टीम के आने तक रुकें नहीं।"]},
+  "Chest pain / possible heart attack":{t:"सीने में दर्द / संभावित दिल का दौरा",a:["व्यक्ति को बैठाएं, आराम करने दें और शांत रखें।","तंग कपड़े ढीले करें।","खाना या पानी न दें। आपातकालीन ऑपरेटर एस्पिरिन की सलाह दे सकता है।","उनके साथ रहें और सांस पर नज़र रखें।","यदि वे गिर जाएं और सांस रुक जाए तो सीपीआर शुरू करें।"]},
+  "Choking":{t:"दम घुटना (गले में कुछ फंसना)",a:["व्यक्ति को ज़ोर से खांसने के लिए कहें।","यदि वे खांस, बोल या सांस न ले सकें, तो कंधों के बीच 5 ज़ोरदार थपकी दें।","फिर पेट पर 5 झटके दें (पीछे खड़े हों, नाभि के ऊपर मुट्ठी रखें, अंदर और ऊपर की ओर खींचें)।","वस्तु निकलने तक थपकी और झटके दोहराएं।","शिशु के लिए सिर्फ़ 5 पीठ पर थपकी और 5 छाती पर दबाव दें। बेहोश हो जाए तो सीपीआर शुरू करें।"]},
+  "Severe bleeding":{t:"गंभीर रक्तस्राव",a:["साफ़ कपड़े या पट्टी से घाव को मज़बूती से दबाएं।","कपड़ा भीग जाए तो उसे न हटाएं; ऊपर से और कपड़ा लगाएं।","संभव हो तो घायल अंग को ऊपर उठाएं और व्यक्ति को लिटाए रखें।","घाव में फंसी वस्तु को न निकालें।","व्यक्ति को गर्म और शांत रखें।"]},
+  "Burns":{t:"जलना",a:["जले हुए हिस्से को 20 मिनट तक ठंडे बहते पानी के नीचे रखें।","जले स्थान के पास की अंगूठी या तंग चीज़ें हटाएं, जब तक वे त्वचा से चिपकी न हों।","साफ़ क्लिंग फ़िल्म या बिना रोएं वाले कपड़े से ढीला ढक दें।","बर्फ, मक्खन या टूथपेस्ट न लगाएं और छाले न फोड़ें।","गंभीर या बड़े जलने पर अस्पताल ज़रूरी है।"]}
+};
+function tr(s) {
+  if (LANG !== "hi" || !s) return s;
+  var core = s.trim();
+  if (HI[core]) return s.replace(core, HI[core]);
+  var out = s;
+  PARTS.forEach(function (p) { out = p[0] instanceof RegExp ? out.replace(p[0], p[1]) : out.split(p[0]).join(p[1]); });
+  return out;
+}
+function trNode(n) {
+  var v = n.nodeValue, p = n.parentNode;
+  if (n._t === v || !v.trim() || !p || p.nodeName === "SCRIPT" || p.nodeName === "STYLE") return;
+  if (p.nodeName === "OPTION" && !p.hasAttribute("value")) p.setAttribute("value", v);
+  var nv = tr(v);
+  if (nv !== v) { n._o = v; n._t = nv; n.nodeValue = nv; }
+}
+function trAttrs(root) {
+  [].forEach.call(root.querySelectorAll("[placeholder],[title]"), function (e) {
+    ["placeholder", "title"].forEach(function (a) {
+      if (!e.hasAttribute(a) || e.id === "langbtn") return;
+      var k = "data-o-" + a;
+      if (!e.hasAttribute(k)) e.setAttribute(k, e.getAttribute(a));
+      e.setAttribute(a, LANG === "hi" ? tr(e.getAttribute(k)) : e.getAttribute(k));
+    });
+  });
+}
+function walk(root) {
+  if (root.nodeType === 3) { trNode(root); return; }
+  if (root.nodeType !== 1) return;
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n, list = [];
+  while ((n = w.nextNode())) list.push(n);
+  list.forEach(trNode); trAttrs(root);
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("asrLang", l); } catch (e) {}
+  document.documentElement.lang = l;
+  if (l === "hi") walk(document.body);
+  else {
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), n, list = [];
+    while ((n = w.nextNode())) list.push(n);
+    list.forEach(function (x) { if (x._o !== undefined && x._t === x.nodeValue) { x.nodeValue = x._o; x._t = undefined; } });
+    trAttrs(document.body);
+  }
+  $("langbtn").textContent = l === "hi" ? "English" : "हिन्दी";
+}
+function toggleLang() { setLang(LANG === "hi" ? "en" : "hi"); }
+new MutationObserver(function (ms) {
+  if (LANG !== "hi") return;
+  ms.forEach(function (m) {
+    if (m.type === "characterData") trNode(m.target);
+    else [].forEach.call(m.addedNodes, walk);
+  });
+}).observe(document.body, { childList: true, characterData: true, subtree: true });
+
+// ---------- START ----------
+(function () {
+  Object.keys(ZONES).forEach(function (z) { var o = document.createElement("option"); o.textContent = z; $("zone").appendChild(o); });
+  $("yr").textContent = new Date().getFullYear();
+  load(); renderPrio(); render();
+  try { if (localStorage.getItem("asrLang") === "hi") setLang("hi"); } catch (e) {}
+  var th = "light"; try { th = localStorage.getItem("asrTheme") || "light"; } catch (e) {}
+  setTheme(th);
+})();
+</script>
+</body>
+</html>
