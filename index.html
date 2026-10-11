@@ -156,6 +156,54 @@
   [data-theme="dark"] .tab .n { background: #fff; color: #0369a1; }
   [data-theme="dark"] #toast { background: #0369a1; }
   [data-theme="dark"] #aiBtn { background: linear-gradient(135deg, var(--sky), #0369a1); border-color: #0f1b2d; }
+  /* animated header scene */
+  .top { position: relative; min-height: 165px; padding-right: 130px; align-items: flex-start; padding-top: 8px; }
+  .top > .logo { position: relative; z-index: 1; }
+  .top::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(90deg, rgba(3,105,161,.6) 0%, rgba(3,105,161,0) 42%); }
+  .scene { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .logo h1 { text-shadow: 0 2px 8px rgba(3,105,161,.7); }
+  .sc { animation: fadeAll 16s infinite; }
+  .sc * { transform-box: view-box; }
+  @keyframes fadeAll { 0% { opacity: 0; } 3%, 94% { opacity: 1; } 98%, 100% { opacity: 0; } }
+  .car { animation: carIn 16s infinite; }
+  @keyframes carIn { 0% { transform: translateX(520px); } 7%, 100% { transform: translateX(0); } }
+  .boom, .hurt, .phone, .b1, .b2, .pm { opacity: 0; }
+  .boom { animation: boom 16s infinite; }
+  @keyframes boom { 0%, 6% { opacity: 0; } 7% { opacity: 1; } 13%, 100% { opacity: 0; } }
+  .hurt { animation: hurt 16s infinite; }
+  @keyframes hurt { 0%, 7% { opacity: 0; transform: translateX(0); } 8%, 70% { opacity: 1; transform: translateX(0); } 77%, 78% { opacity: 1; transform: translateX(-57px); } 79%, 100% { opacity: 0; transform: translateX(-57px); } }
+  .c { opacity: 0; animation: walk 16s infinite; }
+  @keyframes walk { 0%, 8% { opacity: 0; transform: translateX(var(--f)); } 9% { opacity: 1; transform: translateX(var(--f)); } 28%, 100% { opacity: 1; transform: translateX(0); } }
+  .bob { animation: bob .45s infinite alternate; }
+  @keyframes bob { to { transform: translateY(-1.5px); } }
+  .phone { animation: ph 16s infinite; }
+  @keyframes ph { 0%, 29% { opacity: 0; } 30%, 56% { opacity: 1; } 57%, 100% { opacity: 0; } }
+  .b1 { animation: b1 16s infinite; } .b2 { animation: b2 16s infinite; }
+  @keyframes b1 { 0%, 31% { opacity: 0; transform: translateY(6px); } 33%, 44% { opacity: 1; transform: none; } 46%, 100% { opacity: 0; } }
+  @keyframes b2 { 0%, 46% { opacity: 0; transform: translateY(6px); } 48%, 60% { opacity: 1; transform: none; } 62%, 100% { opacity: 0; } }
+  .ambu { animation: ambGo 16s infinite; transform: translateX(-130px); }
+  @keyframes ambGo { 0%, 38% { transform: translateX(-130px); animation-timing-function: ease-out; } 53%, 80% { transform: translateX(320px); animation-timing-function: ease-in; } 96%, 100% { transform: translateX(800px); } }
+  .pm { animation: pmGo 16s infinite; }
+  @keyframes pmGo { 0%, 59% { opacity: 0; transform: translateX(0); } 60% { opacity: 1; transform: translateX(0); } 67%, 70% { opacity: 1; transform: translateX(50px); } 77%, 78% { opacity: 1; transform: translateX(6px); } 80%, 100% { opacity: 0; transform: translateX(6px); } }
+  .lr, .lb { animation: blink .5s infinite; } .lb { animation-delay: .25s; }
+  @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .15; } }
+  .dash { animation: dash 1s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -26; } }
+  @media (prefers-reduced-motion: reduce) { .scene *, .scene { animation: none !important; } }
+  /* header menu */
+  .hdr-right { position: absolute; top: 14px; right: 18px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .menubtn { position: relative; width: 42px; height: 38px; border-radius: 10px; background: rgba(255,255,255,.25); border: 1px solid rgba(255,255,255,.7); cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; transition: .2s; }
+  .menubtn:hover { background: rgba(255,255,255,.4); }
+  .menubtn i { display: block; width: 20px; height: 2.5px; background: #fff; border-radius: 2px; transition: .25s; }
+  .menubtn.open i:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .menubtn.open i:nth-child(2) { opacity: 0; }
+  .menubtn.open i:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+  .menubtn:not([data-n="0"])::after { content: attr(data-n); position: absolute; top: -7px; right: -7px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; line-height: 18px; border-radius: 9px; text-align: center; }
+  .minirow { display: flex; gap: 6px; }
+  .langbtn.mini { padding: 4px 10px; font-size: 12px; box-shadow: 0 2px 6px rgba(3,105,161,.3); }
+  #chips { display: none; position: absolute; top: calc(100% + 8px); right: 0; flex-direction: column; gap: 8px; background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 10px; min-width: 160px; box-shadow: 0 12px 30px rgba(3,105,161,.35); animation: fade .2s; }
+  #chips.open { display: flex; }
+  #chips .chip { background: var(--skypale); border: 1px solid var(--line); color: var(--text); }
   /* toast */
   #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--skydark); color: #fff; padding: 12px 22px; border-radius: 30px; opacity: 0; transition: .35s; z-index: 9; box-shadow: 0 6px 20px rgba(3,105,161,.4); }
   #toast.on { transform: translateX(-50%); opacity: 1; }
@@ -167,10 +215,39 @@
 
 <div class="app">
   <div class="top">
-    <div class="logo"><span class="ico">🚑</span><div><h1>Ambulance Dispatch Center</h1><small>Emergency response control panel</small></div></div>
-    <div class="chips" id="chips"></div>
-    <button class="langbtn" id="langbtn" onclick="toggleLang()" title="Language / भाषा">हिन्दी</button>
-    <button class="langbtn" id="themebtn" onclick="toggleTheme()" title="Dark / Light mode">🌙</button>
+    <svg class="scene" viewBox="0 0 1000 150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs><g id="ppl"><circle cx="0" cy="-19" r="3.6" fill="currentColor"/><path d="M0-15V-6M-4-12H4M0-6L-3 0M0-6L3 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></g></defs>
+      <g fill="rgba(255,255,255,.16)"><rect x="40" y="70" width="40" height="54"/><rect x="95" y="52" width="34" height="72"/><rect x="150" y="82" width="50" height="42"/><rect x="620" y="60" width="44" height="64"/><rect x="690" y="78" width="36" height="46"/><rect x="750" y="48" width="42" height="76"/><rect x="805" y="84" width="50" height="40"/></g>
+      <rect x="880" y="62" width="84" height="62" fill="#f8fdff"/><rect x="918" y="76" width="16" height="5" fill="#ef4444"/><rect x="923.5" y="70.5" width="5" height="16" fill="#ef4444"/>
+      <g fill="#bae6fd"><rect x="888" y="94" width="10" height="8"/><rect x="950" y="94" width="10" height="8"/><rect x="888" y="108" width="10" height="8"/><rect x="950" y="108" width="10" height="8"/></g><rect x="914" y="104" width="18" height="20" fill="#7dd3fc"/>
+      <rect x="0" y="124" width="1000" height="26" fill="#1e3a5f"/><rect x="0" y="120" width="1000" height="4" fill="#cbd5e1"/>
+      <line class="dash" x1="0" y1="140" x2="1000" y2="140" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-dasharray="14 12"/>
+      <rect x="482" y="88" width="4" height="36" fill="#94a3b8"/><circle cx="484" cy="87" r="4" fill="#fde68a"/>
+      <g class="sc">
+        <g class="car"><rect x="490" y="116" width="56" height="14" rx="3" fill="#ef4444"/><rect x="500" y="108" width="34" height="9" rx="3" fill="#ef4444"/><rect x="504" y="110" width="26" height="5" fill="#bae6fd"/><circle cx="502" cy="131" r="5" fill="#0f172a"/><circle cx="534" cy="131" r="5" fill="#0f172a"/></g>
+        <text class="boom" x="468" y="122" font-size="20">💥</text>
+        <g class="hurt"><circle cx="453" cy="127" r="3.6" fill="#fbbf24"/><path d="M457 128H472l6 2" stroke="#0c4a6e" stroke-width="3" stroke-linecap="round" fill="none"/></g>
+        <g class="c" style="--f:-380px"><g class="bob"><use href="#ppl" x="416" y="124" style="color:#0c4a6e"/></g></g>
+        <g class="c" style="--f:-440px"><g class="bob"><use href="#ppl" x="427" y="124" style="color:#7c2d12"/></g></g>
+        <g class="c" style="--f:-500px"><g class="bob"><use href="#ppl" x="438" y="124" style="color:#4c1d95"/></g></g>
+        <g class="c" style="--f:-560px"><g class="bob"><use href="#ppl" x="406" y="124" style="color:#065f46"/></g></g>
+        <rect class="phone" x="418" y="101" width="4" height="7" rx="1" fill="#22d3ee"/>
+        <g class="b1"><rect x="406" y="56" width="36" height="22" rx="11" fill="#fff"/><path d="M418 78l6 8 6-8z" fill="#fff"/><text x="424" y="72" text-anchor="middle" font-size="13">📞</text></g>
+        <g class="b2"><rect x="406" y="56" width="36" height="22" rx="11" fill="#fff"/><path d="M418 78l6 8 6-8z" fill="#fff"/><text x="424" y="72" text-anchor="middle" font-size="13">🚑</text></g>
+        <g class="ambu"><rect x="0" y="106" width="80" height="26" rx="4" fill="#fff"/><rect x="0" y="122" width="80" height="4" fill="#ef4444"/><rect x="21" y="112" width="14" height="4" fill="#ef4444"/><rect x="26" y="107" width="4" height="14" fill="#ef4444"/><rect x="60" y="110" width="16" height="9" rx="2" fill="#7dd3fc"/><rect x="30" y="102" width="20" height="4" fill="#475569"/><circle class="lr" cx="34" cy="100" r="3" fill="#ef4444"/><circle class="lb" cx="46" cy="100" r="3" fill="#3b82f6"/><circle cx="16" cy="133" r="6" fill="#0f172a"/><circle cx="62" cy="133" r="6" fill="#0f172a"/><circle cx="16" cy="133" r="2" fill="#94a3b8"/><circle cx="62" cy="133" r="2" fill="#94a3b8"/></g>
+        <g class="pm"><g class="bob"><use href="#ppl" x="392" y="124" style="color:#059669"/></g></g>
+        <g class="pm"><g class="bob"><use href="#ppl" x="402" y="124" style="color:#059669"/></g></g>
+      </g>
+    </svg>
+    <div class="logo"><span class="ico">🚑</span><div><h1>Ambulance Dispatch Center</h1></div></div>
+    <div class="hdr-right" id="hdrRight">
+      <button class="menubtn" id="menubtn" onclick="toggleMenu()" title="Status" data-n="0"><i></i><i></i><i></i></button>
+      <div class="minirow">
+        <button class="langbtn mini" id="langbtn" onclick="toggleLang()" title="Language / भाषा">हिन्दी</button>
+        <button class="langbtn mini" id="themebtn" onclick="toggleTheme()" title="Dark / Light mode">🌙</button>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
   </div>
 
   <div class="tabs" id="tabs"></div>
@@ -233,8 +310,8 @@
     </div>
     <button class="teambtn" id="teambtn" onclick="toggleTeam()">👥 Meet the Team</button>
     <div class="team" id="team">
-      <span><em>A</em>bhishek</span>
-      <span><em>S</em>udhakar</span>
+      <span><em>A</em>bhishek Kumar Sharma</span>
+      <span><em>S</em>udhakar Kumar Mehta</span>
       <span><em>R</em>oshan</span>
     </div>
     <div class="members">🎓 Lovely Professional University &nbsp;•&nbsp; CSE326 Internet Programming</div>
@@ -386,6 +463,7 @@ function renderMap() {
 function render() {
   // chips + tabs
   var p = pending(), act = state.requests.filter(function (r) { return r.status === "Active"; });
+  $("menubtn").setAttribute("data-n", p.length);
   $("chips").innerHTML = '<span class="chip">⏳ Pending <b>' + p.length + '</b></span><span class="chip">📡 Active <b>' + act.length +
     '</b></span><span class="chip">🟢 Free <b>' + freeAmbs().length + "/" + state.ambulances.length + "</b></span>";
   var counts = { dispatch: p.length, active: act.length };
@@ -554,6 +632,15 @@ function toggleAI() {
 // ---------- BACK TO TOP ----------
 function toTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
 window.addEventListener("scroll", function () { $("up").className = window.scrollY > 250 ? "on" : ""; });
+
+// ---------- HEADER MENU ----------
+function toggleMenu() {
+  $("chips").classList.toggle("open");
+  $("menubtn").classList.toggle("open");
+}
+document.addEventListener("click", function (e) {
+  if (!$("hdrRight").contains(e.target)) { $("chips").classList.remove("open"); $("menubtn").classList.remove("open"); }
+});
 
 // ---------- DARK / LIGHT MODE ----------
 function setTheme(t) {
