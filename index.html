@@ -206,6 +206,31 @@
   .logo .ico::after { content: "ASR"; position: absolute; top: -7px; left: 50%; transform: translateX(-50%); background: #ef4444; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .6px; line-height: 1; padding: 2px 5px; border-radius: 6px; font-family: Arial, sans-serif; text-shadow: none; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
   .logo h1 { display: inline-block; border-bottom: 3px solid #fff; padding-bottom: 3px; }
   .panel h2 { display: inline-block; border-bottom: 1.5px solid var(--sky); padding-bottom: 5px; }
+  /* hidden code-explanation panel */
+  .secret { width: 12px; height: 12px; min-width: 12px; padding: 0; border: none; border-radius: 50%; background: rgba(14,165,233,.12); cursor: pointer; align-self: center; }
+  .secret:hover { background: rgba(14,165,233,.6); }
+  #codeBox { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(3,30,60,.65); z-index: 60; align-items: center; justify-content: center; }
+  #codeBox.open { display: flex; }
+  .cbox { background: var(--white); color: var(--text); width: min(780px, 94vw); max-height: 88vh; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .chead { background: linear-gradient(90deg, var(--sky), var(--sky2)); color: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .chead b { font-size: 16px; } .chead small { display: block; font-size: 11px; color: #e0f2fe; }
+  .chead button { background: rgba(255,255,255,.25); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
+  #cq { margin: 10px 14px 0; width: auto; }
+  #ccats { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 14px; }
+  #ccats span { background: var(--skylight); color: var(--skydark); border: 1px solid var(--line); padding: 4px 11px; border-radius: 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  #ccats span.on { background: var(--sky); color: #fff; border-color: var(--sky); }
+  #clist { overflow-y: auto; padding: 4px 14px 16px; }
+  .cd { background: var(--skypale); border: 1px solid var(--line); border-left: 4px solid var(--sky); border-radius: 10px; padding: 9px 12px; margin-bottom: 8px; font-size: 13px; line-height: 1.45; }
+  .cd .nm { font-family: Consolas, monospace; font-weight: 700; color: var(--skydark); font-size: 14px; }
+  .cd .ct { float: right; font-size: 11px; background: var(--skylight); color: var(--skydark); padding: 1px 9px; border-radius: 8px; }
+  .cd .wh { color: var(--muted); margin-top: 3px; }
+  #clk { padding: 26px 18px 30px; text-align: center; }
+  #clk input { width: 200px; max-width: 80%; text-align: center; letter-spacing: 4px; margin: 0 auto 8px; display: block; }
+  #clk .err { color: #dc2626; font-size: 14px; font-weight: 600; min-height: 42px; margin-bottom: 4px; }
+  .shake { animation: shake .45s; }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-12px) rotate(-1deg); } 30% { transform: translateX(10px) rotate(1deg); } 45% { transform: translateX(-8px); } 60% { transform: translateX(6px); } 80% { transform: translateX(-3px); } }
+  #cbody { display: none; flex-direction: column; min-height: 0; flex: 1; }
+  #cbody.open { display: flex; }
   /* toast */
   #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--skydark); color: #fff; padding: 12px 22px; border-radius: 30px; opacity: 0; transition: .35s; z-index: 9; box-shadow: 0 6px 20px rgba(3,105,161,.4); }
   #toast.on { transform: translateX(-50%); opacity: 1; }
@@ -315,6 +340,7 @@
       <span><em>A</em>bhishek</span>
       <span><em>S</em>udhakar</span>
       <span><em>R</em>oshan</span>
+      <button class="secret" id="secretBtn" onclick="openCode()" tabindex="-1" aria-hidden="true"></button>
     </div>
     <div class="members">🎓 Lovely Professional University &nbsp;•&nbsp; CSE326 Internet Programming</div>
     <div class="members">✉️ <a href="mailto:teamasr404@gmail.com">teamasr404@gmail.com</a> &nbsp;•&nbsp; Version 4.0.4</div>
@@ -327,6 +353,23 @@
   <div id="aiMsgs"></div>
   <div id="aiChips"></div>
   <div class="aiIn"><input id="aiInput" placeholder="Describe the emergency..." onkeydown="if(event.key==='Enter')sendAI()"><button onclick="sendAI()">➤</button></div>
+</div>
+<div id="codeBox" data-notr onclick="if(event.target===this)closeCode()">
+  <div class="cbox">
+    <div class="chead"><div><b>💻 Code Explanation</b><small>Private guide: which tag / code is used for what</small></div><button onclick="closeCode()">✖</button></div>
+    <div id="clk">
+      <div id="clkIco" style="font-size:38px">🔒</div>
+      <p style="margin:6px 0 12px">Enter the code to open</p>
+      <input id="cpin" type="password" maxlength="12" placeholder="Code" autocomplete="off" onkeydown="if(event.key==='Enter')checkCode()">
+      <div class="err" id="cerr"></div>
+      <button class="btn main" onclick="checkCode()">Unlock</button>
+    </div>
+    <div id="cbody">
+      <input id="cq" placeholder="Search a tag or feature: button, flex, table, dark mode..." oninput="codeRender()">
+      <div id="ccats"></div>
+      <div id="clist"></div>
+    </div>
+  </div>
 </div>
 <button id="up" title="Back to top" onclick="toTop()">⬆</button>
 <div id="toast"></div>
@@ -635,6 +678,113 @@ function toggleAI() {
 function toTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
 window.addEventListener("scroll", function () { $("up").className = window.scrollY > 250 ? "on" : ""; });
 
+// ---------- HIDDEN CODE-EXPLANATION PANEL ----------
+// [category, name, what it does, where it is used in this website]
+var CODE_DOC = [
+ ["HTML","<!DOCTYPE html>","Tells the browser this is an HTML5 page.","Very first line of the file."],
+ ["HTML","<html lang>","Root element that wraps the whole page. lang tells the language (JavaScript changes it for Hindi).","Whole page."],
+ ["HTML","<head>","Holds information that is not shown on the page: title, meta, style.","Top of the file."],
+ ["HTML","<meta charset> / <meta viewport>","charset UTF-8 lets Hindi letters and emojis display. viewport makes the page fit phone screens.","Inside <head>."],
+ ["HTML","<title>","Text shown on the browser tab.","Inside <head>."],
+ ["HTML","<style>","Holds all the CSS (colours, layout, animations) in the same file.","Inside <head>."],
+ ["HTML","<body>","Everything that is visible on the page.","Wraps header, tabs, panels, footer."],
+ ["HTML","<div>","Generic box used to group things and build the layout. The most used tag here.","Header, tabs, panels, cards, fleet tiles, assistant chat box, popup."],
+ ["HTML","<h1>","Main heading of the page.","'Ambulance Dispatch Center' in the header."],
+ ["HTML","<h2>","Section heading (smaller than h1).","'New Emergency Request', 'Pending Requests', 'Fleet', 'History'."],
+ ["HTML","<p>","Paragraph tag for normal text. NOT used in this project: text is placed in <div> and <span> instead.","Not used (good viva answer: it would be used for plain paragraphs)."],
+ ["HTML","<span>","Small inline container to style part of a line of text.","Priority/status badges, hotline pills, team-name badges, ASR tag."],
+ ["HTML","<small>","Smaller secondary text.","Subtitles inside the assistant and this panel."],
+ ["HTML","<b> <i> <em>","Bold, italic and emphasised text.","<b> in numbers and names, <em> for the big first letters A, S, R of the team names."],
+ ["HTML","<button>","Clickable control. onclick runs a JavaScript function.","Submit, Dispatch, tabs, ☰ menu, language, dark mode, ✚ assistant, back-to-top, this hidden button."],
+ ["HTML","<input>","Single-line text box. placeholder shows a hint.","Patient name, assistant chat box, search box of this panel."],
+ ["HTML","<textarea>","Multi-line text box.","Emergency description."],
+ ["HTML","<select> + <option>","Drop-down list; each option is one choice.","Location list, choosing which ambulance to dispatch."],
+ ["HTML","<label>","Caption text of a form field.","Labels above the request form fields."],
+ ["HTML","<table> <tr> <th> <td>","Table, row, header cell, data cell. Built by JavaScript.","Incident History table."],
+ ["HTML","<ol> + <li>","Numbered list and its items.","First-aid steps shown by the ✚ assistant."],
+ ["HTML","<a href>","Link. href='mailto:' opens the email app; onclick can switch tabs.","Footer quick links and team email."],
+ ["HTML","<footer>","Bottom section of the page.","Hotlines, links, Meet the Team, copyright."],
+ ["HTML","<br>","Line break.","Between messages in the assistant."],
+ ["HTML","<script>","Holds the JavaScript that makes the page work.","End of the file."],
+ ["SVG","<svg>","Container for vector drawings that scale without blur.","Animated header scene and the Live Map."],
+ ["SVG","<rect> <circle> <path> <line>","Basic shapes: rectangle, circle, free-form path, straight line.","Ambulance, car, road, people, hospital, map dots."],
+ ["SVG","<text>","Text inside a drawing.","ASR on the ambulance, zone names on the map, 💥 and 📞 icons."],
+ ["SVG","<g> <defs> <use>","<g> groups shapes so they move together, <defs> stores a reusable shape, <use> draws it again.","One 'person' shape reused for the crowd and paramedics."],
+ ["CSS","CSS variables (:root, --sky)","Store a colour once and reuse it everywhere. Dark mode just changes the values.","Colour theme of the whole site."],
+ ["CSS","display: flex","Flexbox: arranges items in a row or column and centres them.","Header, tabs, cards, footer pills, chat box."],
+ ["CSS","display: grid","Grid: places items in equal columns that wrap automatically.","Form fields, ambulance fleet tiles."],
+ ["CSS","position: absolute / fixed","absolute places an element inside its parent; fixed keeps it on screen while scrolling.","☰ menu, floating ✚ button, back-to-top, header animation, popup."],
+ ["CSS","@keyframes + animation","Describes steps of an animation and plays it.","Siren glow, header accident scene, panel fade-in, blinking lights."],
+ ["CSS","transition and :hover","Smooth change when the mouse hovers or a class changes.","Buttons, tabs, Meet the Team slide-down."],
+ ["CSS","linear-gradient, box-shadow, border-radius","Colour blends, shadows and rounded corners.","Header, buttons, cards, round logo."],
+ ["CSS","::after pseudo-element","Adds extra decoration without writing extra HTML.","Red ASR tag on the logo, dark shade over the header."],
+ ["CSS","[data-theme='dark']","Selector that applies only when the page has data-theme='dark'.","Dark mode colours."],
+ ["CSS","overflow / max-height","Hide or limit content; animating max-height makes a slide-down effect.","Meet the Team reveal, scrolling chat and tables."],
+ ["JavaScript","state object","One object holds all requests and ambulances (the data of the project).","state.requests and state.ambulances."],
+ ["JavaScript","localStorage (save / load)","Browser memory that keeps data after refresh.","save() and load(); also remembers language and theme."],
+ ["JavaScript","render()","Rebuilds every list on screen from the data using innerHTML.","Called after every change."],
+ ["JavaScript","addRequest() / makeRequest()","Reads the form, creates a request object and pushes it into the array.","New Request form."],
+ ["JavaScript","pending() with sort()","Filters pending requests and sorts Critical first, then by time.","Dispatch tab queue."],
+ ["JavaScript","dist() and Math.hypot","Distance between two map coordinates; the smallest distance is the nearest ambulance (★).","Dispatch dropdown and Auto-Assign."],
+ ["JavaScript","doAssign() / autoAssign()","Links an ambulance to a request and sets its status to Dispatched.","Dispatch button."],
+ ["JavaScript","advance() with STEPS array","Moves a trip to the next stage: Dispatched, En Route, On Scene, Transporting, At Hospital, then completed.","Active Trips tab."],
+ ["JavaScript","toast()","Shows a short popup message and hides it with setTimeout.","Messages like 'Request submitted'."],
+ ["JavaScript","go() and TABS","Switches the visible tab by changing the class of the panels.","Top tab bar and footer links."],
+ ["JavaScript","toggleMenu()","Opens or closes the ☰ dropdown with classList.toggle.","Pending / Active / Free menu."],
+ ["JavaScript","setTheme()","Sets data-theme on <html> and saves it.","Dark / light button."],
+ ["JavaScript","HI dictionary, tr(), MutationObserver","Looks up English text in a Hindi dictionary and replaces it; the observer translates new content automatically.","Hindi / English button."],
+ ["JavaScript","aiReply() keyword matching","Checks the typed text against keyword lists (AI_KB) and returns the best matching first-aid steps. It is rule-based, not a real AI model.","✚ First-Aid Assistant."],
+ ["JavaScript","fitScene()","Changes the SVG viewBox on narrow screens so the animation fits phones.","Header animation."],
+ ["JavaScript","toggleTeam()","Shows or hides the team names.","Meet the Team button."],
+ ["Feature → Code","Emergency request","Form (<input>, <textarea>, <select>) + addRequest() + state.requests.","New Request tab."],
+ ["Feature → Code","Location","<select> filled from the ZONES object, which also stores x,y map positions.","Form, map, distance."],
+ ["Feature → Code","Priority","Four clickable <div> buttons set the priority; pending() sorts by PRIO_ORDER.","Form and Dispatch tab."],
+ ["Feature → Code","Ambulance availability","Each ambulance has a status; free ones are filtered with freeAmbs().","Fleet tab and Dispatch dropdown."],
+ ["Feature → Code","Dispatch assignment","<select> of free ambulances + doAssign() sets request.ambId.","Dispatch tab."],
+ ["Feature → Code","Trip status","request.trip + advance() + coloured progress bar.","Active Trips tab."],
+ ["Feature → Code","Incident history","Finished requests (status Done) drawn as an HTML table.","History tab."],
+ ["Feature → Code","Live map","SVG drawn by renderMap(); red pulsing dots are open emergencies.","Fleet & Map tab."],
+ ["Feature → Code","Header animation","SVG shapes + CSS @keyframes timeline of 16 seconds.","Top header."],
+ ["Feature → Code","Hidden panel (this)","Secret <button> inside the team list calls openCode(); the popup asks for the code ASR (checkCode()) before showing this guide.","Footer > Meet the Team."]
+];
+var codeCat = "All";
+function codeRender() {
+  var q = $("cq").value.toLowerCase(), cats = ["All", "HTML", "SVG", "CSS", "JavaScript", "Feature → Code"];
+  $("ccats").innerHTML = cats.map(function (c) { return '<span class="' + (c === codeCat ? "on" : "") + '" onclick="codeCat=\'' + c + '\';codeRender()">' + c + "</span>"; }).join("");
+  var list = CODE_DOC.filter(function (d) { return (codeCat === "All" || d[0] === codeCat) && (d[1] + " " + d[2] + " " + d[3]).toLowerCase().indexOf(q) > -1; });
+  $("clist").innerHTML = list.length ? list.map(function (d) {
+    return '<div class="cd"><span class="ct">' + d[0] + '</span><span class="nm">' + esc(d[1]) + "</span><div>" + esc(d[2]) + '</div><div class="wh">📍 Used in: ' + esc(d[3]) + "</div></div>";
+  }).join("") : '<div class="empty">Nothing found.</div>';
+}
+function openCode() {
+  $("codeBox").classList.add("open");
+  $("cbody").classList.remove("open"); $("clk").style.display = "block";
+  $("cpin").value = ""; $("cerr").textContent = ""; $("clkIco").textContent = "🔒";
+  setTimeout(function () { $("cpin").focus(); }, 50);
+}
+function checkCode() {
+  if ($("cpin").value.trim().toUpperCase() === "ASR") {
+    $("clk").style.display = "none"; $("cbody").classList.add("open"); codeRender();
+  } else {
+    var t = $("cpin").value.trim() ? TEASE[tries++ % TEASE.length] : ["😅", "Kuch to type karo, bhai!"];
+    $("clkIco").textContent = t[0]; $("cerr").textContent = t[1]; $("cpin").value = "";
+    var b = document.querySelector(".cbox"); b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
+  }
+}
+var tries = 0;
+var TEASE = [
+  ["😜", "Nice try! Par ye wo code nahi hai."],
+  ["🕵️", "Chor chor! Pakde gaye 😄"],
+  ["🤨", "Hmm... lagta hai tumne andaza lagaya hai."],
+  ["🙈", "Arre bhai, kuch aur try karo!"],
+  ["😂", "Itni mehnat padhai me lagate to topper ban jaate!"],
+  ["🚨", "Alert! Alert! Ghuspaithiya detected! 🚑"],
+  ["🤫", "Hint? Bilkul nahi milega. Team ASR ka raaz hai!"],
+  ["🥱", "Main thak gaya, tum nahi thake?"]
+];
+function closeCode() { $("codeBox").classList.remove("open"); }
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeCode(); });
+
 // ---------- FIT ANIMATED SCENE TO SCREEN ----------
 function fitScene() {
   var sv = document.querySelector(".scene"), small = window.innerWidth < 700;
@@ -721,7 +871,7 @@ function tr(s) {
 }
 function trNode(n) {
   var v = n.nodeValue, p = n.parentNode;
-  if (n._t === v || !v.trim() || !p || p.nodeName === "SCRIPT" || p.nodeName === "STYLE") return;
+  if (n._t === v || !v.trim() || !p || p.nodeName === "SCRIPT" || p.nodeName === "STYLE" || (p.closest && p.closest("[data-notr]"))) return;
   if (p.nodeName === "OPTION" && !p.hasAttribute("value")) p.setAttribute("value", v);
   var nv = tr(v);
   if (nv !== v) { n._o = v; n._t = nv; n.nodeValue = nv; }
